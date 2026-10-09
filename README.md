@@ -1,4 +1,4 @@
-# hermes-muse — Goals, Feed and Ideas for Hermes Agent
+# hermes-plugins — Goals, Feed and Ideas for Hermes Agent
 
 Three dashboard plugins that give a team of Hermes agents the same three surfaces Meta's Muse assistant has: **Goals** (what each agent is driving toward), **Feed** (what finished), **Ideas** (what agents offer to do next).
 
@@ -131,9 +131,9 @@ Auth is the dashboard's own loopback session token (`X-Hermes-Session-Token`), s
 ## Install
 
 ```bash
-git clone https://github.com/dzianisv/hermes-muse ~/workspace/hermes-muse
+git clone https://github.com/dzianisv/hermes-plugins ~/workspace/hermes-plugins
 for p in goals-page feed-page ideas-page; do
-  ln -sfn ~/workspace/hermes-muse/plugins/$p ~/.hermes/plugins/$p
+  ln -sfn ~/workspace/hermes-plugins/plugins/$p ~/.hermes/plugins/$p
 done
 ```
 
