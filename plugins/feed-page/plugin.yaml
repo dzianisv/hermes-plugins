@@ -1,0 +1,4 @@
+name: feed-page
+version: 0.1.0
+description: Feed page (Muse-style) for the Hermes dashboard plus feed_post / idea_propose agent tools.
+author: Alfred

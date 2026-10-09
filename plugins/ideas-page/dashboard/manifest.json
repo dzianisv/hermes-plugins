@@ -1,0 +1,11 @@
+{
+  "name": "ideas-page",
+  "label": "Ideas",
+  "description": "Proactive ideas the agents propose; accept, dismiss or discuss each one.",
+  "icon": "Lightbulb",
+  "version": "0.1.0",
+  "tab": { "path": "/ideas", "position": "after:sessions" },
+  "entry": "dist/index.js",
+  "css": "dist/style.css",
+  "api": "plugin_api.py"
+}

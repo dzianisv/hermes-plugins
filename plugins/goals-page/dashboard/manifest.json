@@ -1,0 +1,11 @@
+{
+  "name": "goals-page",
+  "label": "Goals",
+  "description": "Current goals across all local profiles: active, waiting, paused, done.",
+  "icon": "Target",
+  "version": "0.1.0",
+  "tab": { "path": "/goals", "position": "after:sessions" },
+  "entry": "dist/index.js",
+  "css": "dist/style.css",
+  "api": "plugin_api.py"
+}

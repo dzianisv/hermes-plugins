@@ -1,0 +1,11 @@
+{
+  "name": "feed-page",
+  "label": "Feed",
+  "description": "Plain-English cards about what the agents finished: posted via feed_post plus every completed goal.",
+  "icon": "Newspaper",
+  "version": "0.1.0",
+  "tab": { "path": "/feed", "position": "after:sessions" },
+  "entry": "dist/index.js",
+  "css": "dist/style.css",
+  "api": "plugin_api.py"
+}

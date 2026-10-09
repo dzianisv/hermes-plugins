@@ -1,0 +1,6 @@
+[
+ {
+  "key": "goal:20260825_065901_1bf9b9ff",
+  "value": "{\"goal\": \"https://app.notion.com/p/GOAL-3aeac25eb49f81db85f3c966bc115639\", \"status\": \"done\", \"turns_used\": 5, \"max_turns\": 20, \"created_at\": 1787728705.9078941, \"last_turn_at\": 1787730234.08732, \"last_verdict\": \"done\", \"last_reason\": \"Agent identified a genuine blocker requiring user action (separate GitHub account for review) and cannot proceed further without it.\", \"paused_reason\": null, \"consecutive_parse_failures\": 0, \"subgoals\": [], \"waiting_on_pid\": null, \"waiting_on_session\": null, \"waiting_until\": 0.0, \"waiting_reason\": null, \"waiting_since\": 0.0, \"contract\": {\"outcome\": \"\", \"verification\": \"\", \"constraints\": \"\", \"boundaries\": \"\", \"stop_when\": \"\"}}"
+ }
+]
