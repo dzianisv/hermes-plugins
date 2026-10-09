@@ -154,6 +154,10 @@ hermes config set plugins.enabled '["goals-page","feed-page","ideas-page"]
 
 Restart the dashboard (`hermes dashboard`). Gateways pick up the tools on their next restart. Goals can run alone. Feed can run without Goals but reports the missing goal integration in `errors[]`. Ideas requires the Feed plugin files for its shared store. A Hermes build that writes `state_meta` keys named `goal:<session_id>` is required for the Goals view and goal-derived Feed cards; this repository does not add that core feature.
 
+**Agent-owned goals (the `goal` tool).** Upstream PR [NousResearch/hermes-agent#134448](https://github.com/NousResearch/hermes-agent/pull/134448) is a draft. Until it lands, use the fork at the PR's head commit `b0c39b1d7e` (branch `goals-agent-tool` on [dzianisv/hermes-agent](https://github.com/dzianisv/hermes-agent)) and set `goals.agent_tool: true` in the profile config. User-set `/goal` works on any Hermes build and shows in the Goals page without the tool.
+
+Design history: `docs/design/` holds the v1 Goals page design, the staff-engineer critique that cut it (`goals-page-critique.md`), and the Feed/Ideas spec.
+
 ## Repo layout
 
 ```
