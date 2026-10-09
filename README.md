@@ -1,6 +1,6 @@
 # hermes-plugins — Goals, Feed and Ideas for Hermes Agent
 
-Three dashboard plugins that give a team of Hermes agents the same three surfaces Meta's Muse assistant has: **Goals** (what each agent is driving toward), **Feed** (what finished), **Ideas** (what agents offer to do next).
+Three dashboard plugins inspired by the Muse screens documented in our research: **Goals** (what each agent is driving toward), **Feed** (what finished), **Ideas** (what agents offer to do next).
 
 ## TL;DR
 
@@ -12,9 +12,9 @@ Three dashboard plugins that give a team of Hermes agents the same three surface
 - **Feed** — a timeline of cards agents post when something finished (PR merged, refund landed, decision needed), merged with every goal the judge marked done. You react with thumbs up/down; agents can read those reactions.
 - **Ideas** — first-person offers ("I can keep Buster's care on schedule…") that agents propose without being asked. You accept or dismiss; the agent that proposed it can see the decision and mark it done.
 
-Everything is local: SQLite files under `~/.hermes`, a FastAPI router mounted by the dashboard, a vanilla-JS tab using the dashboard plugin SDK. No gateway changes, no schema migration, no cloud.
+Plugin storage is local: SQLite files under `~/.hermes`, a FastAPI router mounted by the dashboard, and JavaScript tabs using the dashboard plugin SDK. The plugins do not change Hermes' session schema; Feed creates its own tables in `muse.db`. They do not provide a cloud service or replace Hermes' goal engine.
 
-**Where this came from.** We checked upstream Hermes (`NousResearch/hermes-agent`) and OpenClaw: Hermes has a per-session goal indicator in the desktop app and 15 open goal-related PRs, none of which adds a cross-session view; OpenClaw has heartbeats but no goals UI. The UX is copied from Muse's Goals / Feed / Ideas tabs (screenshots in the design doc). Design doc and the gpt-6-astra critique that shaped v1: see [References](#references).
+**Where this came from.** Our research compared goals, heartbeats, and proactive work in Muse, Dots, Hermes, and OpenClaw. The linked design notes explain why we chose a cross-session Goals view, a Feed, and an Ideas inbox. Those notes are design research, not a claim about the current features or internal implementation of another product. See [References](#references).
 
 ## Screenshots
 
@@ -22,7 +22,7 @@ Everything is local: SQLite files under `~/.hermes`, a FastAPI router mounted by
 |---|---|---|
 | ![Goals](docs/img/goals-page.png) | ![Feed](docs/img/feed.png) | ![Ideas](docs/img/ideas-selected.png) |
 
-## How it fits into Hermes
+## System design: how it fits into Hermes
 
 ```
                     ┌──────────────────────── Hermes dashboard (:9119) ───────────────────────┐
@@ -103,8 +103,10 @@ ideas row  status = proposed
 you: Accept ──► status accepted (green check)      Dismiss ──► dismissed
    │
    └ proposing agent ──► ideas_read(status="accepted") → does the work
-                     ──► idea_update(id, "done")   (agents cannot set "accepted")
+                     ──► idea_update(id, "done")   (this tool refuses "accepted")
 ```
+
+**Accepting is not dispatching.** The Accept button only updates a database row. It does not wake a session, create a goal, or schedule work. An already-running agent must call `ideas_read` and act on the decision, or a separately configured controller must wake it. The arrows above show that separate agent step, not an automatic background worker shipped by these plugins.
 
 ## Agent tools (toolset `muse`)
 
@@ -114,7 +116,9 @@ you: Accept ──► status accepted (green check)      Dismiss ──► dismi
 | `feed_read(limit?, profile?, query?)` | any agent | Read recent cards + done goals, including the user's thumbs. |
 | `idea_propose(title, body, needs_from_user, icon?)` | any agent | Offer something the user has not asked for. Deduped by title while `proposed`. |
 | `ideas_read(status?, profile?, query?)` | any agent | See what's proposed/accepted/dismissed/done. |
-| `idea_update(id, status)` | proposing agent | `done` or `dismissed`. `accepted` is refused — only the user accepts. |
+| `idea_update(id, status)` | agent with this tool | Set `done`, `dismissed`, or `proposed`. The tool refuses `accepted`. |
+
+This is a shared, trusted-user dashboard, not a multi-tenant authorization system. The tool does not enforce ownership by the proposing profile, and the dashboard status endpoint accepts all four statuses. Refusing `accepted` in the tool is a tool-level restriction, not proof that an agent with other API or filesystem access cannot change it.
 
 ## HTTP API (mounted by the dashboard)
 
@@ -132,22 +136,23 @@ Auth is the dashboard's own loopback session token (`X-Hermes-Session-Token`), s
 
 ```bash
 git clone https://github.com/dzianisv/hermes-plugins ~/workspace/hermes-plugins
+mkdir -p ~/.hermes/plugins
 for p in goals-page feed-page ideas-page; do
-  ln -sfn ~/workspace/hermes-plugins/plugins/$p ~/.hermes/plugins/$p
+  ln -s ~/workspace/hermes-plugins/plugins/$p ~/.hermes/plugins/$p
 done
 ```
 
-Then in `~/.hermes/config.yaml` (and in each profile's `config.yaml` whose agents should get the tools):
+The links above deliberately refuse to overwrite an existing installation. Inspect an existing path before replacing it.
 
-```yaml
-plugins:
-  enabled:
-    - goals-page
-    - feed-page
-    - ideas-page
+Enable the plugins through the Hermes CLI, rather than editing the live YAML by hand. For a fresh installation with no other enabled plugins:
+
+```bash
+hermes config set plugins.enabled '["goals-page","feed-page","ideas-page"]
 ```
 
-Restart the dashboard (`hermes dashboard`). Gateways pick up the tools on their next restart. The three plugins can be installed independently; Feed degrades gracefully (reports in `errors[]`) if Goals is absent, and Ideas needs Feed for its store.
+**Existing installation:** this command replaces the enabled list. Include every already-enabled plugin as well as these three. The example targets the default profile only; install/enable under a named profile separately only when you intend to change that profile.
+
+Restart the dashboard (`hermes dashboard`). Gateways pick up the tools on their next restart. Goals can run alone. Feed can run without Goals but reports the missing goal integration in `errors[]`. Ideas requires the Feed plugin files for its shared store. A Hermes build that writes `state_meta` keys named `goal:<session_id>` is required for the Goals view and goal-derived Feed cards; this repository does not add that core feature.
 
 ## Repo layout
 
@@ -186,8 +191,9 @@ What they check, all against real-shaped rows copied from a live `state.db` (no 
 - Parent doc "Goal and Heartbeat" (Notion): https://app.notion.com/p/Goal-and-Heartbeat-3f2ac25eb49f80a6a4adcf2a1d91e498 — how goals and heartbeats are supervised across the agent team; field notes on supervisor misreads this UI is meant to prevent.
 - Upstream goal tool PR: https://github.com/NousResearch/hermes-agent/pull/134448 — `goal(create/get/complete)` with acceptance criteria; the rows this UI reads.
 - Hermes dashboard plugin SDK: `website/docs/developer-guide/desktop-plugin-sdk.md` and `plugins/hermes-achievements/dashboard/` in `NousResearch/hermes-agent` (the manifest/API pattern copied here).
-- Prior-art check (2026-10-08): `NousResearch/hermes-agent` — `apps/desktop/src/store/goals.ts` (per-session indicator only), 15 open goal PRs, none cross-session; OpenClaw — heartbeat, no goals UI.
-- UX reference: Meta Muse app, Goals / Feed / Ideas tabs.
+- UX reference: the Muse Goals / Feed / Ideas screenshots and comparison notes in the design document above. Product comparisons are a dated research snapshot, not a maintained compatibility matrix.
+
+The Notion research pages may require workspace access. The architecture and flow descriptions in this README stand on their own; readers do not need those private notes to understand the source.
 
 ## License
 
